@@ -61,18 +61,18 @@
 
     - name:  debug cmd    
       debug: 
-        msg: "gluster volume create media_store replica 2 transport tcp {{ ( groups['glusterfs'] + [' '] ) | join('-') | replace('-', ':/gluster/media ') }} force"
+        msg: "gluster volume create media_store replica {{ groups['glusterfs'] | length  }} transport tcp {{ ( groups['glusterfs'] + [' '] ) | join('-') | replace('-', ':/gluster/media ') }} force"
 
     - name: Create Media Store Volume  
-      shell: "gluster volume create media_store replica 2 transport tcp {{ ( groups['glusterfs'] + [' '] ) | join('-') | replace('-', ':/gluster/media ') }} force"
+      shell: "gluster volume create media_store replica {{ groups['glusterfs'] | length  }} transport tcp {{ ( groups['glusterfs'] + [' '] ) | join('-') | replace('-', ':/gluster/media ') }} force"
       
 
     - name:  debug cmd    
       debug: 
-        msg: "gluster volume create skin_store replica 2 transport tcp {{ ( groups['glusterfs'] + [' '] ) | join('-') | replace('-', ':/gluster/skin ') }} force"
+        msg: "gluster volume create skin_store replica {{ groups['glusterfs'] | length  }} transport tcp {{ ( groups['glusterfs'] + [' '] ) | join('-') | replace('-', ':/gluster/skin ') }} force"
 
     - name: Create Skin Volume  
-      shell: "gluster volume create skin_store replica 2 transport tcp {{ ( groups['glusterfs'] + [' '] ) | join('-') | replace('-', ':/gluster/skin ') }} force"
+      shell: "gluster volume create skin_store replica {{ groups['glusterfs'] | length }} transport tcp {{ ( groups['glusterfs'] + [' '] ) | join('-') | replace('-', ':/gluster/skin ') }} force"
       
     - name: Start Media Store Volume 
       shell: gluster volume start media_store;
@@ -85,8 +85,8 @@
 #   tasks:
 #     - name: Add hosts 
 #       debug: 
-#         # msg: "{{ groups['glusterfs'] + [' '] }}"
-#         msg: "{{ ( groups['glusterfs'] + [' '] ) | join('-') | replace('-', ':/data ') }}"
+#         msg: "{{ groups['glusterfs'] | length  }}"
+        # msg: "{{ ( groups['glusterfs'] + [' '] ) | join('-') | replace('-', ':/data ') }}"
 
 
 - hosts: client 

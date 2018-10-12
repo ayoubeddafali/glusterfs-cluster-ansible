@@ -1,0 +1,12 @@
+[glusterfs]
+142.93.94.155
+142.93.94.171
+
+[glusterfs-master]
+142.93.94.155
+
+[glusterfs-replicas]
+142.93.94.171
+
+[client]
+142.93.89.147

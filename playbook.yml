@@ -1,0 +1,96 @@
+--- # Playbook for installing Magento Components
+
+- hosts: all
+  strategy: free
+  remote_user: root
+
+  tasks:
+    - name: Disable SELinux
+      selinux:
+        state: disabled
+      register: task_result
+    - name: Reboot immediately if there was a change.
+      shell: "sleep 5 && reboot"
+      async: 1
+      poll: 0
+      when: task_result is changed
+    - name: Wait for the reboot to complete if there was a change.
+      wait_for_connection:
+        connect_timeout: 20
+        sleep: 5
+        delay: 5
+        timeout: 300
+      when: task_result is changed
+    # - parted:
+    #     device: /dev/sdb
+    #     number: 1
+    #     state: present
+
+
+- hosts: glusterfs
+  remote_user: root
+  tasks:
+    # - name: Add hosts 
+    #   template: 
+    #     src: templates/hosts.j2
+    #     dest: /etc/hosts
+    - name : Setup Glustefs
+      script: gluster.sh
+    - name: Create dirs 
+      shell: mkdir -p /gluster/{media,skin}
+
+- hosts: glusterfs-master 
+  remote_user: root 
+  tasks:
+    - name : debug msg 
+      debug: 
+        msg: "gluster peer probe {{ item }}"
+      with_items: "{{ groups['glusterfs-replicas'] }}"
+
+    - name : peer proble replicas 
+      shell: gluster peer probe  "{{ item }}"
+      with_items: "{{ groups['glusterfs-replicas'] }}"
+    
+    - name : peer status 
+      shell: gluster peer status
+      register: status 
+
+    - name:  debug status    
+      debug: 
+        msg: "{{ status }}"
+
+    - name:  debug cmd    
+      debug: 
+        msg: "gluster volume create media_store replica 2 transport tcp {{ ( groups['glusterfs'] + [' '] ) | join('-') | replace('-', ':/gluster/media ') }} force"
+
+    - name: Create Media Store Volume  
+      shell: "gluster volume create media_store replica 2 transport tcp {{ ( groups['glusterfs'] + [' '] ) | join('-') | replace('-', ':/gluster/media ') }} force"
+      
+
+    - name:  debug cmd    
+      debug: 
+        msg: "gluster volume create skin_store replica 2 transport tcp {{ ( groups['glusterfs'] + [' '] ) | join('-') | replace('-', ':/gluster/skin ') }} force"
+
+    - name: Create Skin Volume  
+      shell: "gluster volume create skin_store replica 2 transport tcp {{ ( groups['glusterfs'] + [' '] ) | join('-') | replace('-', ':/gluster/skin ') }} force"
+      
+    - name: Start Media Store Volume 
+      shell: gluster volume start media_store;
+
+    - name: Start Skin Volume 
+      shell: gluster volume start skin_store;
+
+# - hosts: local
+#   remote_user: neo
+#   tasks:
+#     - name: Add hosts 
+#       debug: 
+#         # msg: "{{ groups['glusterfs'] + [' '] }}"
+#         msg: "{{ ( groups['glusterfs'] + [' '] ) | join('-') | replace('-', ':/data ') }}"
+
+
+- hosts: client 
+  remote_user: root 
+  tasks: 
+    - name: Mount Glusterfs   
+      script: client.sh "{{ groups['glusterfs-master'][0] }}"
